@@ -1,0 +1,123 @@
+---
+title: "Candy Analysis"
+author: "Peter Menzies"
+date: "10/11/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+```{r, warning=FALSE, message=FALSE}
+library(tidyverse)
+library(readxl)
+library(here)
+```
+```{r}
+sweets <- read_csv(here("clean_data/sweets_cleaned.CSV"), col_types = cols(country = col_character(), gender = col_character()))
+```
+
+#Q1
+
+```{r}
+sweets %>% 
+  select(rating) %>% 
+  nrow()
+```
+* 757108 ratings. NA's dropped during cleaning
+
+# Q2
+```{r}
+sweets %>% 
+  group_by(trick_or_treating) %>% 
+  summarise(avg_age = mean(age, na.rm = T))
+```
+
+# Q3
+
+```{r}
+sweets %>% 
+  filter(rating == "JOY") %>% 
+  group_by(sweets_type) %>% 
+  summarise(most_joy = n()) %>% 
+  slice_max(most_joy, n = 3)
+
+sweets %>% 
+  filter(rating == "DESPAIR") %>% 
+  group_by(sweets_type) %>% 
+  summarise(most_despair = n()) %>% 
+  slice_max(most_despair, n = 3)
+
+sweets %>% 
+  filter(rating == "MEH") %>% 
+  group_by(sweets_type) %>% 
+  summarise(most_meh = n()) %>% 
+  slice_max(most_meh, n = 3)
+
+```
+* most joy = full sized bars
+* most despair = a broken glow stick
+* most meh = lollipops
+
+# Q4 
+
+```{r}
+sweets %>% 
+  filter(sweets_type == "starburst", rating == "DESPAIR") %>% 
+  summarise(number_despairing_starburst = n())
+ 
+```
+
+# Q5 - changing rating
+
+```{r}
+sweets_int_rating <- sweets %>% 
+  mutate(rating = recode(rating,
+                         "JOY" = "1",
+                         "MEH" = "0",
+                         "DESPAIR" = "-1")) %>% 
+  mutate(rating = as.integer(rating))
+```
+
+# Q6
+
+```{r}
+sweets_int_rating %>% 
+  group_by(gender, sweets_type) %>% 
+  summarise(sweet_rating = sum(rating)) %>% 
+  slice_max(sweet_rating)
+```
+
+# Q7
+
+```{r}
+sweets_int_rating %>% 
+  group_by(year, sweets_type) %>% 
+  summarise(sweet_rating = sum(rating)) %>% 
+  slice_max(sweet_rating)
+  
+```
+
+# Q8
+
+```{r}
+sweets_int_rating %>% 
+  group_by(country, sweets_type) %>% 
+  summarise(sweet_rating = sum(rating)) %>% 
+  slice_max(sweet_rating)
+```
+
+* noone cares what they get as long as it's full sized. 
+* Unless you're british in which case they want money.
+
+
+
+
+
+
+
+
+
+
+
+

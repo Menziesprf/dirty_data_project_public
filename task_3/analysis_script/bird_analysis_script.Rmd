@@ -1,0 +1,138 @@
+---
+title: "Task 3 - Sea Bird Analysis"
+author: "Peter Menzies"
+date: "12/11/2020"
+output: html_document
+---
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+```{r, warning=FALSE, message=FALSE}
+library(tidyverse)
+library(here)
+```
+
+# Intro/Cleaning Discussion
+
+This markdown contains some limited analysis of bird sightings in the Souther portions of the Indian and Pacific oceans. 
+
+For the cleaning script see the cleaning script folder.
+
+The raw data came in the form of 4 tables: 2 with data("birds" and "ships"), 2 explaining the columns names.
+
+Unnecessary columns were dropped from the 2 data tables and they were cleaned individually before being joined.
+
+##### **Birds Table**
+The tags indicating age,plumage,etc were not needed so were removed. This information is also in the dropped columns so can be recovered should it be necessary. 
+
+The "count" column contained a number of NA's. This was problematic as by there being a reported sighting of a bird, the count must equal at least 1. However, when analysing the size of group a species was observed in, an imputed value of 1 would be inaccurate.
+
+Therefore it was decided to keep the original column ("count") with NA values and to add a column ("count_coerced") with NA values imputed to 1.
+
+Where this imputed column is used, the count should be understood to be >= n.
+
+Values of "[NO BIRD RECORDED]" were imputed to NA and dropped.
+
+NA's in scientific name and abbreviated name columns were ignored. ("species_scientific", "species_abbreviated")
+
+##### **Ships Table**
+
+Inaccurate date in the "time" column was removed.
+
+NA's in date, time, latitude, longtitude and hemisphere columns were ignored.
+
+
+```{r, warning=FALSE, message=FALSE}
+here()
+birds_info <- read_csv(here("clean_data/birds_sightings_clean_data.csv"))
+```
+
+# Q1 - Most individual sightings
+
+```{r, message=FALSE}
+birds_info %>% 
+  group_by(species_common) %>% 
+  summarise(number_of_sightings = length(species_common)) %>%
+  slice_max(number_of_sightings)
+```
+
+The species with the most individual sightings was the Wandering Albatross with 11,293 sightings. 
+
+The true number of Wandering Albatross sightings may have been higher as there reported sightings where the sub-species of Albatross was unable to be identified. 
+
+# Q2 - Highest Total Count
+
+* Since NA's in 'count' column were imputed to 1, this evaluates the minimum possible count for each species.
+
+```{r, message=FALSE}
+birds_info %>% 
+  group_by(species_common) %>% 
+  summarise(total_count = sum(count_coerced)) %>% 
+  slice_max(total_count, n = 3)
+```
+
+The species with the highest total count is the Short-tailed shearwater, with a whopping 982,669. Quite far ahead of the next highest total count of 326,542 for unidentified Prions (a small Petrel not the brain disease). 
+
+# Q3 - Highest Total Count North of -30 Latitude
+
+```{r, message=FALSE}
+birds_info %>% 
+  filter(latitude > -30) %>% 
+  group_by(species_common) %>% 
+  summarise(total_count = sum(count_coerced)) %>% 
+  slice_max(total_count, n = 3)
+```
+
+North of a latitude of -30 the Wedge-tailed shearwater was the most spotted species. In far smaller numbers than the species spotted further South. 
+
+# Q4 - Groups of 1
+
+2 groups of species were selected; one of species seen as groups of 1, and another of species seen as groups of more than 1. These groups were compared to give a list of species spotted only as individuals.
+
+The non imputed count column was used for this piece of analysis.
+
+```{r}
+count_of_1 <- birds_info %>% 
+  filter(count == 1) %>% 
+  distinct(species_common) %>% 
+  pull()
+
+count_over_1 <- birds_info %>% 
+  filter(count > 1) %>% 
+  distinct(species_common) %>% 
+  pull()
+```
+
+```{r}
+
+count_only_one <- c()
+for (bird in count_of_1){
+  if (bird %in% count_over_1){
+  } else {
+    count_only_one <- c(count_only_one, bird)
+  }
+}
+count_only_one
+
+# or setdiff(count_of_1, count_over_1)
+```
+
+
+# Q5 - Total penguins
+
+How many penguins? Not many! And seemingly not seen in large groups.
+
+```{r}
+
+birds_info %>% 
+  filter(str_detect(species_common, "[Pp]enguin")) %>% 
+  summarise(number_penguin_sightings = length(species_common))
+
+birds_info %>% 
+  filter(str_detect(species_common, "[Pp]enguin")) %>%
+  summarise(total_penguins_seen = sum(count_coerced))
+```
+
+
+
+
