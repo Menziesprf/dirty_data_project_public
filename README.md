@@ -5,7 +5,7 @@ This project contains two of the tasks completed during the Dirty Data Project i
 Each Task directory contains 4 folders:
 * Raw data
 * Cleaning scripts
-* Clean data
+* Cleaned data
 * Analysis scripts
 
 
